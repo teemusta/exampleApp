@@ -10,18 +10,28 @@ require(['jquery', 'ramda'], ($, { compose, curry, map, prop }) => {
     setHtml: curry((sel, html) => $(sel).html(html)),
   };
 
-  // Pure
   const host = 'api.flickr.com';
   const path = '/services/feeds/photos_public.gne';
   const query = t => `?tags=${t}&format=json&jsoncallback=?`;
   const url = t => `https://${host}${path}${query(t)}`;
-
   const img = src => $('<img />', { src });
-  const mediaUrl = compose(prop('m'), prop('media'));
+
+  // map's composition law
+  /*
+  compose(map(f), map(g)) === map(compose(f, g));
+  compose(map(img), map(mediaUrl)) === map(compose(img, mediaUrl));
+  */
+
+  // Unoptimized
+  /*
   const mediaUrls = compose(map(mediaUrl), prop('items'));
   const images = compose(map(img), mediaUrls);
+  */
 
-  // Impure
+  const mediaUrl = compose(prop('m'), prop('media'));
+  const mediaToImg = compose(img, mediaUrl);
+  const images = compose(map(mediaToImg), prop('items'));
+
   const render = compose(Impure.setHtml('#js-main'), images);
   const app = compose(Impure.getJSON(render), url);
 
